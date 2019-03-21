@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+{ set +x; } 2>/dev/null
+
+usage() {
+    cat <<EOF 1>&2
+usage: $(basename $0) path ...
+EOF
+    [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; exit
+}
+
+[[ $1 == "-h" ]] || [[ $1 == "--help" ]] && usage "$@"
+
+[[ $# == 0 ]] && usage
+
+ACCOUNT_ID="$(aws sts get-caller-identity --output text --query 'Account')" || exit
+BACKUP_TO_S3_BUCKET="${BACKUP_TO_S3_BUCKET-backup-to-s3-$ACCOUNT_ID}"
+
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME-$HOME/.config}"
+BACKUP_TO_S3_EXCLUDE_FROM="${BACKUP_TO_S3_EXCLUDE_FROM-$XDG_CONFIG_HOME/backup-to-s3/exclude.txt}"
+
+BUCKET="$BACKUP_TO_S3_BUCKET"
+FILES_FROM=/tmp/files_from.txt
+EXCLUDE_FROM="$BACKUP_TO_S3_EXCLUDE_FROM"
+TMP=/tmp/backup-to-s3/$$
+! [ -e "$TMP" ] && { mkdir -p "$TMP" || exit; }
+
+( set -x; aws s3 mb "s3://$BUCKET" 1> /dev/null ) || exit
+
+while [[ $# != 0 ]]; do
+    path="$1"
+    bucket_folder="$(echo "$1" | sed 's/^\///g' | sed 's/\//_/g')"
+    ! [ -e "$1" ] && echo "ERROR: $1 NOT EXISTS" && exit 1
+    [ -f "$1" ] && LocalPath="$1"
+    [ -d "$1" ] && {
+        LocalPath="$TMP"/${1##*/}.tar.gz
+        (
+            cd "$path" || exit
+            find . -type f ! -name $'Icon\r' > "$FILES_FROM" || exit;
+            set -- tar -czf "$LocalPath" -T "$FILES_FROM"
+            [ -s "$EXCLUDE_FROM" ] && set -- "$@" -X "$EXCLUDE_FROM"
+            [ -d "$path" ] && { cd "$path"; set -- "$@" -C "$PWD"; }
+            ( set -x; "$@" ) || exit
+        ) || exit
+    }
+    S3Uri="s3://$BUCKET/$bucket_folder/$(date "+%Y")/$(date "+%Y-%m")/$(date "+%Y-%m-%d")/${path##*/}-$(date "+%Y-%m-%d_%H:%M:%S").tar.gz"
+    ( set -x; aws s3 cp --quiet "$LocalPath" "$S3Uri" ) || exit
+    shift
+done;:

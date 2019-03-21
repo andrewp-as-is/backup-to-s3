@@ -1,0 +1,15 @@
+{
+  "name": "backup-to-s3",
+  "version": "2019.03.09",
+  "description": "backup to S3",
+  "keywords": [
+    "backup",
+    "aws",
+    "s3"
+  ],
+  "homepage": "https://github.com/looking-for-a-job/backup-to-s3",
+  "license": "Unlicense",
+  "bin": {
+    "backup-to-s3": "./scripts/backup-to-s3"
+  }
+}
