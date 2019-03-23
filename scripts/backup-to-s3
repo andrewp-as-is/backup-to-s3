@@ -45,4 +45,5 @@ while [[ $# != 0 ]]; do
     S3Uri="s3://$BUCKET/$bucket_folder/$(date "+%Y")/$(date "+%Y-%m")/$(date "+%Y-%m-%d")/${path##*/}-$(date "+%Y-%m-%d_%H:%M:%S").tar.gz"
     ( set -x; aws s3 cp --quiet "$LocalPath" "$S3Uri" ) || exit
     shift
-done;:
+done
+[ -e "$TMP" ] && rm -fr "$TMP";:
