@@ -1,5 +1,6 @@
 <!--
 https://pypi.org/project/readme-generator/
+https://pypi.org/project/python-readme-generator/
 -->
 
 [![](https://img.shields.io/badge/OS-Unix-blue.svg?longCache=True)]()
@@ -28,7 +29,7 @@ variable|description|default value
 `BACKUP_TO_S3_BUCKET`|s3 bucket name| `backup-to-s3-<account-id>`
 `BACKUP_TO_S3_EXCLUDE_FROM`|exclude patterns|`$XDG_CONFIG_HOME/backup-to-s3/exclude.txt`, e.g. `~/.config/backup-to-s3/exclude.txt`
 
-#### CLI
+#### Scripts usage
 ```bash
 usage: backup-to-s3 path ...
 ```
@@ -40,5 +41,5 @@ $ backup-to-s3 git
 ```
 
 <p align="center">
-    <a href="https://pypi.org/project/readme-generator/">readme-generator</a>
+    <a href="https://pypi.org/project/python-readme-generator/">python-readme-generator</a>
 </p>

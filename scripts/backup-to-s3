@@ -19,12 +19,11 @@ XDG_CONFIG_HOME="${XDG_CONFIG_HOME-$HOME/.config}"
 BACKUP_TO_S3_EXCLUDE_FROM="${BACKUP_TO_S3_EXCLUDE_FROM-$XDG_CONFIG_HOME/backup-to-s3/exclude.txt}"
 
 BUCKET="$BACKUP_TO_S3_BUCKET"
-FILES_FROM=/tmp/files_from.txt
+FILES_FROM="$(mktemp)" || exit
 EXCLUDE_FROM="$BACKUP_TO_S3_EXCLUDE_FROM"
-TMP=/tmp/backup-to-s3/$$
-! [ -e "$TMP" ] && { mkdir -p "$TMP" || exit; }
+TMP="$(mktemp -d)" || exit
 
-( set -x; aws s3 mb "s3://$BUCKET" 1> /dev/null ) || exit
+aws s3 mb "s3://$BUCKET" 1> /dev/null || exit
 
 while [[ $# != 0 ]]; do
     path="$1"
@@ -39,11 +38,11 @@ while [[ $# != 0 ]]; do
             set -- tar -czf "$LocalPath" -T "$FILES_FROM"
             [ -s "$EXCLUDE_FROM" ] && set -- "$@" -X "$EXCLUDE_FROM"
             [ -d "$path" ] && { cd "$path"; set -- "$@" -C "$PWD"; }
-            ( set -x; "$@" ) || exit
+            "$@" || exit
         ) || exit
     }
     S3Uri="s3://$BUCKET/$bucket_folder/$(date "+%Y")/$(date "+%Y-%m")/$(date "+%Y-%m-%d")/${path##*/}-$(date "+%Y-%m-%d_%H:%M:%S").tar.gz"
-    ( set -x; aws s3 cp --quiet "$LocalPath" "$S3Uri" ) || exit
+    aws s3 cp --quiet "$LocalPath" "$S3Uri" || exit
     shift
 done
 [ -e "$TMP" ] && rm -fr "$TMP";:
