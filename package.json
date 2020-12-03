@@ -1,6 +1,6 @@
 {
   "name": "backup-to-s3",
-  "version": "2019.5.22",
+  "version": "2020.12.3",
   "description": "backup to S3",
   "keywords": [
     "backup",
